@@ -1,3 +1,6 @@
 [submodule "src/thirdparty/librealsense1"]
 	path = src/thirdparty/librealsense1
 	url = https://github.com/IntelRealSense/librealsense.git
+[submodule "src/thirdparty/OpenNI2"]
+	path = src/thirdparty/OpenNI2
+	url = https://github.com/occipital/OpenNI2.git

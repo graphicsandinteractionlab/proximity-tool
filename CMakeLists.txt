@@ -6,7 +6,7 @@ project(ProximityTool)
 set(CMAKE_CXX_STANDARD 11)
 
 # internal cmake modules
-#set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake ${CMAKE_MODULE_PATH})
 
 # boilerplate locations for build
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE PATH "Executables go here")
