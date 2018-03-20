@@ -1,7 +1,3 @@
-// include the librealsense C++ header file
-//#include <librealsense2/rs.hpp>
-
-//#include <librealsense/rs.hpp>
 
 #include "interface_rgbd.hpp"
 
@@ -10,46 +6,83 @@
 // include OpenCV header file
 #include <opencv2/opencv.hpp>
 
+#include <memory>
+
 
 int main() {
 
-
-
-
     bool running = true;
+
+    std::unique_ptr<RGBD> dev;
+
+    dev.reset(RGBD::create(RGBD::kRGBDDeviceOpenNI2,0));
+
+    if (dev == nullptr) {
+        std::cerr << "cannot find device" << std::endl;
+        return -1;
+    }
+
+    if (dev->open() != 0) {
+
+        std::cerr << "cannot open device" << std::endl;
+        return -1;
+    }
+
+    std::string RGB_WINDOW = "RGB";
+    std::string DEPTH_WINDOW = "Depth";
+
 
     while(running) {
 
-        rs::intrinsics   _depth_intrin;
-        rs::intrinsics  _color_intrin;
+        //        dev->update();
 
-        _depth_intrin       = camera->get_stream_intrinsics( rs::stream::depth );
-        _color_intrin       = camera->get_stream_intrinsics( rs::stream::color );
+        int w,h;
 
+        const void *ptr = dev->getRGB(w,h);
 
-        // Create depth image
-        cv::Mat depth16( _depth_intrin.height,
-                         _depth_intrin.width,
-                         CV_16U,
-                         (uchar *)camera->get_frame_data( rs::stream::depth ) );
+//        std::cout << w << "x" << h << std::endl;
 
-        // Create color image
-        cv::Mat rgb( _color_intrin.height,
-                     _color_intrin.width,
-                     CV_8UC3,
-                     (uchar *)camera->get_frame_data( rs::stream::color ) );
-
-        // < 800
-        cv::Mat depth8u = depth16;
-        depth8u.convertTo( depth8u, CV_8UC1, 255.0/1000 );
-
-        // Display RGB and Depth Window
-        cv::namedWindow(RGB_WINDOW, cv::WINDOW_AUTOSIZE );
-        cv::imshow(RGB_WINDOW, rgb);
+        if (ptr != nullptr) {
 
 
-        cv::namedWindow(DEPTH_WINDOW, cv::WINDOW_AUTOSIZE );
-        cv::imshow(DEPTH_WINDOW, depth8u);
+            // Create color image
+            cv::Mat rgb( h,
+                         w,
+                         CV_8UC3,
+                         (uchar*)ptr);
+
+
+            // Display RGB and Depth Window
+            cv::namedWindow(RGB_WINDOW, cv::WINDOW_AUTOSIZE );
+            cv::imshow(RGB_WINDOW, rgb);
+
+        }
+
+
+        const void *depthPtr = dev->getDepth(w,h);
+
+//        std::cout << w << "x" << h << std::endl;
+
+        if (ptr != nullptr) {
+
+
+            // Create color image
+            cv::Mat depthRaw( h,
+                              w,
+                              CV_16UC1,
+                              (uchar*)depthPtr);
+
+
+            cv::Mat depthFloat;
+            depthRaw.convertTo( depthFloat, CV_32FC1, 1/10.f );
+
+
+            // Display RGB and Depth Window
+            cv::namedWindow(DEPTH_WINDOW, cv::WINDOW_AUTOSIZE );
+            cv::imshow(DEPTH_WINDOW, depthFloat);
+
+        }
+
 
         int c = cv::waitKey(1);
 
@@ -60,14 +93,14 @@ int main() {
 
         }
 
-        if( camera->is_streaming( ) ) {
-            camera->wait_for_frames();
-        }
+        //        if( camera->is_streaming( ) ) {
+        //            camera->wait_for_frames();
+        //        }
     };
 
-    if (camera) {
-        camera->stop();
-    }
+    //    if (camera) {
+    //        camera->stop();
+    //    }
 
     cv::destroyAllWindows();
 
