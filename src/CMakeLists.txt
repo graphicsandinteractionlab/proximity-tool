@@ -1,12 +1,12 @@
 
+
+set(BUILD_GRAPHICAL_EXAMPLES FALSE CACHE INTERNAL "")
+set(BUILD_UNIT_TESTS FALSE CACHE INTERNAL "")
+set(BUILD_EXAMPLES FALSE CACHE INTERNAL "")
+
+add_subdirectory(thirdparty/librealsense1)
+
 find_package(OpenCV REQUIRED)
-find_package(realsense2 REQUIRED)
-
-include_directories(
-	${OpenCV_INCLUDE_DIRS}
-	${realsense_INCLUDE_DIR}
-	)
-
 
 add_executable(proximity-tool
 	tool-main.cpp
@@ -15,8 +15,15 @@ add_executable(proximity-tool
 
 target_link_libraries(proximity-tool
 	${OpenCV_LIBS}
-	${realsense2_LIBRARY}
+	realsense
+#	${realsense2_LIBRARY}
+    )
+
+target_include_directories(
+	proximity-tool PUBLIC
+	${OpenCV_INCLUDE_DIRS}
+	thirdparty/librealsense1/include
 	)
 
 
-message(STATUS "RealSense SDK: ${realsense_INCLUDE_DIR}")
+#message(STATUS "RealSense SDK: ${realsense_INCLUDE_DIR}")
