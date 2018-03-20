@@ -239,6 +239,8 @@ void OpenNIDevice::close() {
 
     capture_thread.join();
 
+
+
     depth_stream.destroy();
     color_stream.destroy();
     device.close();

@@ -74,12 +74,14 @@ int main() {
 
 
             cv::Mat depthFloat;
-            depthRaw.convertTo( depthFloat, CV_32FC1, 1/10.f );
+            depthRaw.convertTo( depthFloat, CV_32FC1, 0.1);
 
 
             // Display RGB and Depth Window
             cv::namedWindow(DEPTH_WINDOW, cv::WINDOW_AUTOSIZE );
             cv::imshow(DEPTH_WINDOW, depthFloat);
+
+            std::cout << "d " << depthFloat.at<float>(240,320) << std::endl;
 
         }
 
@@ -92,18 +94,11 @@ int main() {
             break;
 
         }
-
-        //        if( camera->is_streaming( ) ) {
-        //            camera->wait_for_frames();
-        //        }
     };
-
-    //    if (camera) {
-    //        camera->stop();
-    //    }
 
     cv::destroyAllWindows();
 
+    dev->close();
 
     return 0;
 }
