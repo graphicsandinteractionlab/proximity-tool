@@ -1,9 +1,18 @@
+/**
+  * Proximity Tool
+  *
+  * a small unix style tool to get the readings of a OpenNI2 enabled device send over OSC
+  *
+  * (c) Copyrights 2018 - Hartmut Seichter
+  *
+  */
 
 #include "interface_rgbd.hpp"
 
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <thread>
 
 #include "osc/OscOutboundPacketStream.h"
 #include "ip/UdpSocket.h"
@@ -28,20 +37,15 @@ depthValue(const void* ptr,int x, int y,int stride)
 }
 
 
-
 int main(int argc,char **argv) {
 
     bool running = true;
 
-//    if (argc < 3) {
+    std::string receiver = (argc > 1) ? argv[1] : "localhost";
+    int port = (argc > 2) ? std::atoi(argv[2]) : 4455;
 
-//        return -1;
-//    }
-
-//    std::string server =
-
-    UdpTransmitSocket transmitSocket( IpEndpointName( "localhost", 4455 ) );
-
+    //
+    UdpTransmitSocket transmitSocket( IpEndpointName( receiver.c_str(), port ) );
 
     std::unique_ptr<RGBD> dev;
 
@@ -53,14 +57,12 @@ int main(int argc,char **argv) {
     }
 
     if (dev->open() != 0) {
-
         std::cerr << "cannot open device" << std::endl;
         return -1;
     }
 
     std::string RGB_WINDOW = "RGB";
     std::string DEPTH_WINDOW = "Depth";
-
 
     while(running) {
 
@@ -130,6 +132,9 @@ int main(int argc,char **argv) {
               << osc::EndBundle;
 
             transmitSocket.Send( p.Data(), p.Size() );
+
+            // sleep for 10ms
+            std::this_thread::sleep_for(std::chrono::duration<double,std::milli>(10.0));
 
         }
 
