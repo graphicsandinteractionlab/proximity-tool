@@ -1,15 +1,47 @@
 
 #include "interface_rgbd.hpp"
-// include OpenCV header file
-
-#include <opencv2/opencv.hpp>
 
 #include <memory>
+#include <vector>
+#include <iostream>
+
+#include "osc/OscOutboundPacketStream.h"
+#include "ip/UdpSocket.h"
 
 
-int main() {
+#if defined(USE_OPENCV)
+    // include OpenCV header file
+    #include <opencv2/opencv.hpp>
+#endif
+
+inline static unsigned short
+depthValueRaw(const void* ptr,int x, int y,int stride)
+{
+    const unsigned short* ptr_uint16 = reinterpret_cast<const unsigned short*>(ptr);
+    return *(ptr_uint16 + (y * stride + x));
+}
+
+inline static float
+depthValue(const void* ptr,int x, int y,int stride)
+{
+    return static_cast<float>(depthValueRaw(ptr,x,y,stride)) * 0.1f;
+}
+
+
+
+int main(int argc,char **argv) {
 
     bool running = true;
+
+//    if (argc < 3) {
+
+//        return -1;
+//    }
+
+//    std::string server =
+
+    UdpTransmitSocket transmitSocket( IpEndpointName( "localhost", 4455 ) );
+
 
     std::unique_ptr<RGBD> dev;
 
@@ -38,8 +70,8 @@ int main() {
 
         const void *ptr = dev->getRGB(w,h);
 
-//        std::cout << w << "x" << h << std::endl;
-
+        //        std::cout << w << "x" << h << std::endl;
+#if defined (USE_OPENCV)
         if (ptr != nullptr) {
 
 
@@ -49,21 +81,22 @@ int main() {
                          CV_8UC3,
                          (uchar*)ptr);
 
-
             // Display RGB and Depth Window
             cv::namedWindow(RGB_WINDOW, cv::WINDOW_AUTOSIZE );
             cv::imshow(RGB_WINDOW, rgb);
 
         }
+#endif
 
 
         const void *depthPtr = dev->getDepth(w,h);
 
-//        std::cout << w << "x" << h << std::endl;
+        //        std::cout << w << "x" << h << std::endl;
 
-        if (ptr != nullptr) {
+        if (depthPtr != nullptr) {
 
 
+#if defined (USE_OPENCV)
             // Create color image
             cv::Mat depthRaw( h,
                               w,
@@ -79,11 +112,29 @@ int main() {
             cv::namedWindow(DEPTH_WINDOW, cv::WINDOW_AUTOSIZE );
             cv::imshow(DEPTH_WINDOW, depthFloat);
 
-            std::cout << "d " << depthFloat.at<float>(240,320) << std::endl;
+
+            float d = depthFloat.at<float>(240,320);
+            std::cout << "d  " << depthFloat.at<float>(240,320)
+                      << " d2 " << depthValueRaw(depthPtr,320,240,w) << std::endl;
+#endif
+            float d = depthValue(depthPtr,320,240,w);
+
+            std::cout << "depth " << d << std::endl;
+
+            std::vector<char> buffer(1024);
+            osc::OutboundPacketStream p( buffer.data(), buffer.size() );
+
+            p << osc::BeginBundleImmediate
+              << osc::BeginMessage( "/depth" )
+              << d << osc::EndMessage
+              << osc::EndBundle;
+
+            transmitSocket.Send( p.Data(), p.Size() );
 
         }
 
 
+#if defined(USE_OPENCV)
         int c = cv::waitKey(1);
 
         switch (c) {
@@ -92,9 +143,15 @@ int main() {
             break;
 
         }
+#endif
+
     };
 
+
+#if defined(USE_OPENCV)
     cv::destroyAllWindows();
+#endif
+
 
     dev->close();
 

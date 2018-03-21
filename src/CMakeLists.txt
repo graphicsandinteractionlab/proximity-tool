@@ -5,8 +5,7 @@ set(BUILD_UNIT_TESTS FALSE CACHE INTERNAL "")
 set(BUILD_EXAMPLES FALSE CACHE INTERNAL "")
 
 add_subdirectory(thirdparty/librealsense1)
-
-
+add_subdirectory(thirdparty/oscpack_1_1_0)
 
 find_package(OpenCV REQUIRED)
 find_package(OpenNI2)
@@ -45,6 +44,7 @@ message(STATUS "OpenNI2 ${OPENNI2_FOUND}")
 target_link_libraries(proximity-tool
 	${OpenCV_LIBS}
 	${interface_rgbd_libs}
+	oscpack
 	)
 
 target_include_directories(
@@ -52,8 +52,10 @@ target_include_directories(
 	${CMAKE_BINARY_DIR}/include
 	${OpenCV_INCLUDE_DIRS}
 	${interface_rgbd_incs}
+	${thirdparty/oscpack_1_1_0}
 #	thirdparty/librealsense1/include
     )
+
 
 
 #message(STATUS "RealSense SDK: ${realsense_INCLUDE_DIR}")
