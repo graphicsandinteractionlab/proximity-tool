@@ -81,7 +81,6 @@ int main() {
 
             std::cout << "d " << depthFloat.at<float>(240,320) << std::endl;
 
-
         }
 
 
