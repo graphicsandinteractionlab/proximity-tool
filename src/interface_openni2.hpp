@@ -1,3 +1,7 @@
+/*
+ * Interface RGBD - (c) 2018 Hartmut Seichter
+ *
+ */
 #ifndef INTERFACE_RGBD_OPENNI2
 #define INTERFACE_RGBD_OPENNI2
 

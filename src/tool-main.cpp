@@ -1,9 +1,7 @@
 
 #include "interface_rgbd.hpp"
-
-
-
 // include OpenCV header file
+
 #include <opencv2/opencv.hpp>
 
 #include <memory>
@@ -82,6 +80,7 @@ int main() {
             cv::imshow(DEPTH_WINDOW, depthFloat);
 
             std::cout << "d " << depthFloat.at<float>(240,320) << std::endl;
+
 
         }
 
