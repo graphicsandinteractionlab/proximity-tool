@@ -4,10 +4,13 @@ set(BUILD_GRAPHICAL_EXAMPLES FALSE CACHE INTERNAL "")
 set(BUILD_UNIT_TESTS FALSE CACHE INTERNAL "")
 set(BUILD_EXAMPLES FALSE CACHE INTERNAL "")
 
-add_subdirectory(thirdparty/librealsense1)
+#add_subdirectory(thirdparty/librealsense1)
 add_subdirectory(thirdparty/oscpack_1_1_0)
 
-find_package(OpenCV REQUIRED)
+set(pt_incs)
+set(pt_libs)
+
+find_package(OpenCV)
 find_package(OpenNI2)
 
 set(interface_rgbd_libs)
@@ -42,7 +45,6 @@ add_executable(proximity-tool
 message(STATUS "OpenNI2 ${OPENNI2_FOUND}")
 
 target_link_libraries(proximity-tool
-	${OpenCV_LIBS}
 	${interface_rgbd_libs}
 	oscpack
 	)
@@ -50,10 +52,8 @@ target_link_libraries(proximity-tool
 target_include_directories(
 	proximity-tool PUBLIC
 	${CMAKE_BINARY_DIR}/include
-	${OpenCV_INCLUDE_DIRS}
 	${interface_rgbd_incs}
 	${thirdparty/oscpack_1_1_0}
-#	thirdparty/librealsense1/include
     )
 
 
