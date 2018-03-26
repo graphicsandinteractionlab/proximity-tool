@@ -9,6 +9,8 @@
 
 #include "interface_rgbd.hpp"
 
+#include "arrrgh.hpp"
+
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -38,6 +40,18 @@ depthValue(const void* ptr,int x, int y,int stride)
 
 
 int main(int argc,char **argv) {
+
+	arrrgh::parser parser("proximity-tool", "detects proximity");
+
+	const auto& useAscii = parser.add< bool >("ascii",
+		"Use ASCII instead of that UNICORN thing or whatever it is.",
+		'a',
+		arrrgh::Optional,
+		true /* defaults to true */
+		);
+
+
+	parser.parse(argc, argv);
 
     bool running = true;
 

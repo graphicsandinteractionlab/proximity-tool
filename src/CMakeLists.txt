@@ -53,7 +53,9 @@ target_include_directories(
 	proximity-tool PUBLIC
 	${CMAKE_BINARY_DIR}/include
 	${interface_rgbd_incs}
-	${thirdparty/oscpack_1_1_0}
+	thirdparty/oscpack_1_1_0
+	thirdparty/arrrgh
+
     )
 
 
