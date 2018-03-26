@@ -40,6 +40,9 @@ add_executable(proximity-tool
 	interface_rgbd.cpp
 	interface_config.hpp.cmake
 	${interface_rgbd_srcs}
+	${CMAKE_SOURCE_DIR}/README.md
+	${CMAKE_SOURCE_DIR}/LICENSE.md
+
 	)
 
 message(STATUS "OpenNI2 ${OPENNI2_FOUND}")
