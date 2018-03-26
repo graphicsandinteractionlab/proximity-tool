@@ -21,8 +21,8 @@
 
 
 #if defined(USE_OPENCV)
-    // include OpenCV header file
-    #include <opencv2/opencv.hpp>
+// include OpenCV header file
+#include <opencv2/opencv.hpp>
 #endif
 
 inline static unsigned short
@@ -39,27 +39,45 @@ depthValue(const void* ptr,int x, int y,int stride)
 }
 
 
-int main(int argc,char **argv) {
+int main(int argc,const char **argv) {
 
-	arrrgh::parser parser("proximity-tool", "detects proximity");
+    // some information about this tool
+    arrrgh::parser parser("proximity-tool", "detects proximity using OpenNI2 devices - default osc output is to localhost:4455");
 
-	const auto& useAscii = parser.add< bool >("ascii",
-		"Use ASCII instead of that UNICORN thing or whatever it is.",
-		'a',
-		arrrgh::Optional,
-		true /* defaults to true */
-		);
+    // command line parameters
+    const auto& receiver_address = parser.add< std::string >( "receiver", "IP or hostname of receiver", 'r', arrrgh::Optional, "localhost" );
+    const auto& receiver_port = parser.add< int >( "port", "port number", 'p', arrrgh::Optional, 4455 );
+    const auto& need_help = parser.add< bool >( "help", "print command line arguments", 'h', arrrgh::Optional, false );
+    const auto& print_verbose = parser.add< bool >( "verbose", "verbose debug output", 'v', arrrgh::Optional, false );
+    const auto& idle_sleep = parser.add< float >( "idle", "idle time in ms", 'i', arrrgh::Optional, 10.0f );
+//    const auto& grid_size = parser.add< int >( "grid", "grid size", 'g', arrrgh::Optional, 9 );
 
 
-	parser.parse(argc, argv);
+    // try to parse
+    try {
+
+        parser.parse(argc, argv);
+
+    } catch (const std::exception &e) {
+
+        std::cerr << "Error parsing arguments: " << e.what() << std::endl;
+        parser.show_usage( std::cerr );
+
+        return 1;
+    }
+
+    // show help and quit
+    if (need_help.value()) {
+
+        parser.show_usage(std::cout);
+        return 0;
+    }
+
 
     bool running = true;
 
-    std::string receiver = (argc > 1) ? argv[1] : "localhost";
-    int port = (argc > 2) ? std::atoi(argv[2]) : 4455;
-
     //
-    UdpTransmitSocket transmitSocket( IpEndpointName( receiver.c_str(), port ) );
+    UdpTransmitSocket transmitSocket( IpEndpointName( receiver_address.value().c_str(), receiver_port.value() ) );
 
     std::unique_ptr<RGBD> dev;
 
@@ -78,99 +96,68 @@ int main(int argc,char **argv) {
     std::string RGB_WINDOW = "RGB";
     std::string DEPTH_WINDOW = "Depth";
 
+    std::vector<float> depthValues(9);
+
     while(running) {
 
         //        dev->update();
 
         int w,h;
 
-        const void *ptr = dev->getRGB(w,h);
-
-        //        std::cout << w << "x" << h << std::endl;
-#if defined (USE_OPENCV)
-        if (ptr != nullptr) {
-
-
-            // Create color image
-            cv::Mat rgb( h,
-                         w,
-                         CV_8UC3,
-                         (uchar*)ptr);
-
-            // Display RGB and Depth Window
-            cv::namedWindow(RGB_WINDOW, cv::WINDOW_AUTOSIZE );
-            cv::imshow(RGB_WINDOW, rgb);
-
-        }
-#endif
-
-
+//        const void *ptr = dev->getRGB(w,h);
         const void *depthPtr = dev->getDepth(w,h);
-
-        //        std::cout << w << "x" << h << std::endl;
 
         if (depthPtr != nullptr) {
 
 
-#if defined (USE_OPENCV)
-            // Create color image
-            cv::Mat depthRaw( h,
-                              w,
-                              CV_16UC1,
-                              (uchar*)depthPtr);
+            if (depthValues.size() == 9) {
 
+                depthValues[0] = depthValue(depthPtr,160,120,w);
+                depthValues[1] = depthValue(depthPtr,320,120,w);
+                depthValues[2] = depthValue(depthPtr,480,120,w);
 
-            cv::Mat depthFloat;
-            depthRaw.convertTo( depthFloat, CV_32FC1, 0.1);
+                depthValues[3] = depthValue(depthPtr,160,240,w);
+                depthValues[4] = depthValue(depthPtr,320,240,w);
+                depthValues[5] = depthValue(depthPtr,480,240,w);
 
+                depthValues[6] = depthValue(depthPtr,160,360,w);
+                depthValues[7] = depthValue(depthPtr,320,360,w);
+                depthValues[8] = depthValue(depthPtr,480,360,w);
 
-            // Display RGB and Depth Window
-            cv::namedWindow(DEPTH_WINDOW, cv::WINDOW_AUTOSIZE );
-            cv::imshow(DEPTH_WINDOW, depthFloat);
+            } else {
 
+                depthValues[0] = depthValue(depthPtr,320,240,w);
 
-            float d = depthFloat.at<float>(240,320);
-            std::cout << "d  " << depthFloat.at<float>(240,320)
-                      << " d2 " << depthValueRaw(depthPtr,320,240,w) << std::endl;
-#endif
-            float d = depthValue(depthPtr,320,240,w);
+            }
 
-            std::cout << "depth " << d << std::endl;
+            if (print_verbose.value()) {
+                std::cout << "depth ";
+                for (auto v : depthValues) {
+                    std::cout << v;
+                }
+                std::cout << std::endl;
+            }
 
             std::vector<char> buffer(1024);
             osc::OutboundPacketStream p( buffer.data(), buffer.size() );
 
             p << osc::BeginBundleImmediate
-              << osc::BeginMessage( "/depth" )
-              << d << osc::EndMessage
+              << osc::BeginMessage( "/depth" );
+
+            for (auto v : depthValues) {
+                p << v;
+            }
+
+            p << osc::EndMessage
               << osc::EndBundle;
 
             transmitSocket.Send( p.Data(), p.Size() );
 
             // sleep for 10ms
-            std::this_thread::sleep_for(std::chrono::duration<double,std::milli>(10.0));
+            std::this_thread::sleep_for(std::chrono::duration<float,std::milli>(idle_sleep.value()));
 
         }
-
-
-#if defined(USE_OPENCV)
-        int c = cv::waitKey(1);
-
-        switch (c) {
-        case 27:
-            running = false;
-            break;
-
-        }
-#endif
-
     };
-
-
-#if defined(USE_OPENCV)
-    cv::destroyAllWindows();
-#endif
-
 
     dev->close();
 

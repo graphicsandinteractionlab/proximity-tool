@@ -38,8 +38,35 @@ public class OscServer : MonoBehaviour
 			
             var msg = osc.PopMessage ();
 
+//			Debug.Log (msg.data.Length);
+
+
+			//
+			// new version uses the following pattern:
+			// 
+
+			//			__________________
+			//
+			//			|  0	1	2
+			//
+			//			|  3	4	5
+			//
+			//			|  6	7	8
+
+
+
+
+			float depthVal = float.Parse (msg.data [0].ToString ());
+
+			Debug.Log (msg.path + " " + depthVal);
+
+			// thresholding 
+			if (depthVal < 100 || depthVal > 4300)
+				continue;
+
+
 			// smooth the values a bit
-			depth = Mathf.Lerp (depth, float.Parse(msg.data[0].ToString()), 0.5f);
+			depth = Mathf.Lerp (depth, depthVal, 0.5f);
 
 			// use only reasonable range
 			if (depth > 300.0f && depth < 4500.0f && affectedObject) {
